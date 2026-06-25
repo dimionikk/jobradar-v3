@@ -14,3 +14,4 @@ argon2-cffi
 python-jose
 redis
 asyncpg
+feedparser
