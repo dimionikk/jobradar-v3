@@ -1,40 +1,28 @@
-import re
-import html
-import feedparser
-
-
-SALARY_PATTERN = re.compile(r"(?:від|до)?\s*\$[\d.\u2013\u2014-]+")
+import httpx
+from bs4 import BeautifulSoup
 
 
 def parse_dou() -> list[dict]:
-    url = "https://jobs.dou.ua/vacancies/feeds/"
-    feed = feedparser.parse(url)
+    url = "https://jobs.dou.ua/vacancies/"
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    response = httpx.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, "html.parser")
 
     vacancies = []
-    for entry in feed.entries:
-        title_raw = html.unescape(entry.title)
-
-        try:
-            job_title, rest = title_raw.split(" в ", 1)
-        except ValueError:
-            continue
-
-        salary_match = SALARY_PATTERN.search(rest)
-        salary = salary_match.group().strip() if salary_match else None
-        if salary_match:
-            rest = rest.replace(salary_match.group(), "")
-
-        parts = [p.strip() for p in rest.split(",") if p.strip()]
-        company = parts[0] if parts else None
-        city = ", ".join(parts[1:]) if len(parts) > 1 else None
+    for li in soup.find_all("li", class_="l-vacancy"):
+        title_tag = li.find("a", class_="vt")
+        company_tag = li.find("a", class_="company")
+        salary_tag = li.find("span", class_="salary")
+        city_tag = li.find("span", class_="cities")
+        description_tag = li.find("div", class_="sh-info")
 
         vacancy = {
-            "title": job_title.strip(),
-            "company": company,
-            "city": city,
-            "salary": salary,
-            "description": entry.summary,
-            "url": entry.link,
+            "title": title_tag.get_text(strip=True) if title_tag else None,
+            "url": title_tag["href"] if title_tag else None,
+            "company": company_tag.get_text(strip=True) if company_tag else None,
+            "salary": salary_tag.get_text(strip=True) if salary_tag else None,
+            "city": city_tag.get_text(strip=True) if city_tag else None,
+            "description": description_tag.get_text(strip=True) if description_tag else None,
             "source": "dou",
         }
         vacancies.append(vacancy)
