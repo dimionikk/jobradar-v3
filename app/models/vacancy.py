@@ -12,7 +12,7 @@ class Vacancy(Base):
     description: Mapped[str | None] = mapped_column()
     company: Mapped[str | None] = mapped_column()
     city: Mapped[str | None] = mapped_column()
-    salary: Mapped[float | None] = mapped_column()
+    salary: Mapped[str | None] = mapped_column()
     work_type: Mapped[str | None] = mapped_column()
     experience: Mapped[str | None] = mapped_column()
     url: Mapped[str] = mapped_column(unique=True, nullable=False)
