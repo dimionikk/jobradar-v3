@@ -16,3 +16,4 @@ redis
 asyncpg
 feedparser
 beautifulsoup4
+apscheduler
