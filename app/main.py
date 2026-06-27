@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.core.config import settings
-from app.routers import auth, profile, ai
+from app.routers import auth, profile, ai, saved_vacancies
 from contextlib import asynccontextmanager
 from app.core.scheduler import scheduler
 
@@ -14,4 +14,5 @@ app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION, lifespan=li
 app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(ai.router)
+app.include_router(saved_vacancies.router)
 
