@@ -28,4 +28,4 @@ async def run_parsers_job():
     print(f"Парсинг завершено: нових {result['new']}, пропущено {result['skipped']}")
 
 
-scheduler.add_job(run_parsers_job, "interval", seconds=10)
+scheduler.add_job(run_parsers_job, "interval", hours=6)
