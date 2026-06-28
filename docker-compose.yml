@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://jobradar_own:E-BHhzbOHaHoON3dDunC52fRdskteivW@db:5432/jobradar-db
+      - REDIS_URL=redis://redis:6379
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=jobradar_own
+      - POSTGRES_PASSWORD=E-BHhzbOHaHoON3dDunC52fRdskteivW
+      - POSTGRES_DB=jobradar-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: valkey/valkey:8
+
+volumes:
+  postgres_data:
