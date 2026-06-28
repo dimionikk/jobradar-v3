@@ -12,7 +12,7 @@ from app.core.config import settings
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 from app.core.database import Base
-from app.models import user, vacancy, saved_vacancy, application
+from app.models import applications, user, vacancy, saved_vacancy
 
 target_metadata = Base.metadata
 
