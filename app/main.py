@@ -16,3 +16,7 @@ app.include_router(profile.router)
 app.include_router(ai.router)
 app.include_router(saved_vacancies.router)
 app.include_router(applications.router)
+
+@app.get("/cicd-test")
+async def cicd_test():
+    return {"message": "CI/CD works!"}
