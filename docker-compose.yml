@@ -1,8 +1,8 @@
 services:
   app:
     build: .
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       - DATABASE_URL=postgresql+asyncpg://jobradar_own:${POSTGRES_PASSWORD}@db:5432/jobradar-db
       - REDIS_URL=redis://redis:6379
@@ -24,6 +24,15 @@ services:
     restart: always
   redis:
     image: valkey/valkey:8
+    restart: always
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:Z
+    depends_on:
+      - app
     restart: always
 volumes:
   postgres_data:
