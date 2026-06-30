@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.schemas.applications import ApplicationOut, ApplicationUpdate
-
+from app.schemas.common import MessageResponse
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -13,7 +13,7 @@ from app.models.applications import Application
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
 
-@router.post("/{vacancy_id}", status_code=status.HTTP_201_CREATED)
+@router.post("/{vacancy_id}", status_code=status.HTTP_201_CREATED, response_model=MessageResponse)
 async def create_application(
     vacancy_id: int,
     current_user: User = Depends(get_current_user),
@@ -21,18 +21,28 @@ async def create_application(
 ):
     vacancy_result = await db.execute(select(Vacancy).where(Vacancy.id == vacancy_id))
     vacancy = vacancy_result.scalar_one_or_none()
-
     if vacancy is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vacancy not found",
         )
-
+    existing_result = await db.execute(
+        select(Application).where(
+            Application.user_id == current_user.id,
+            Application.vacancy_id == vacancy_id,
+        )
+    )
+    existing = existing_result.scalar_one_or_none()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Application already exists for this vacancy",
+        )
     new_application = Application(user_id=current_user.id, vacancy_id=vacancy_id)
     db.add(new_application)
     await db.commit()
-
     return {"message": "Application created successfully"}
+
 
 @router.get("/", response_model=list[ApplicationOut])
 async def get_applications(
@@ -46,6 +56,7 @@ async def get_applications(
     )
     applications = result.scalars().all()
     return applications
+
 
 @router.patch("/{application_id}", response_model=ApplicationOut)
 async def update_application(
@@ -63,23 +74,20 @@ async def update_application(
         )
     )
     application = result.scalar_one_or_none()
-
     if application is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
         )
-
     update_data = request.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(application, field, value)
-
     await db.commit()
     await db.refresh(application)
-
     return application
 
-@router.delete("/{application_id}")
+
+@router.delete("/{application_id}", status_code=status.HTTP_200_OK, response_model=MessageResponse)
 async def delete_application(
     application_id: int,
     current_user: User = Depends(get_current_user),
@@ -92,14 +100,11 @@ async def delete_application(
         )
     )
     application = result.scalar_one_or_none()
-
     if application is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
         )
-
     await db.delete(application)
     await db.commit()
-
     return {"message": "Application deleted successfully"}
