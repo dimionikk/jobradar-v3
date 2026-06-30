@@ -1,15 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token, verify_access_token
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserOut
+from app.schemas.common import MessageResponse
 from app.core.dependencies import oauth2_scheme
 from app.core.redis_client import redis_client
 from datetime import datetime, timezone
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
 
 
 @router.post("/register", response_model=UserOut)
@@ -26,7 +33,7 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     return new_user
 
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     results = await db.execute(select(User).where(User.email == user.email))
     existing_user = results.scalar_one_or_none()
@@ -36,7 +43,7 @@ async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=MessageResponse)
 async def logout_user(token: str = Depends(oauth2_scheme)):
     payload = verify_access_token(token)
     if payload is None:
