@@ -16,7 +16,7 @@ class ApplicationStatus(str, enum.Enum):
 class Application(Base):
     __tablename__ = "applications"
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     vacancy_id: Mapped[int] = mapped_column(ForeignKey("vacancies.id"), nullable=False)
     status: Mapped[ApplicationStatus] = mapped_column(
         SQLEnum(
