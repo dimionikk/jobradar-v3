@@ -28,25 +28,20 @@ async def generate_cover_letter(
 ):
     result = await db.execute(select(Vacancy).where(Vacancy.id == request.vacancy_id))
     vacancy = result.scalar_one_or_none()
-
     if vacancy is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vacancy not found",
         )
-
     prompt = f"""Напиши супровідний лист українською мовою для відгуку на вакансію.
-
 Дані кандидата:
 - Стек технологій: {current_user.stack or "не вказано"}
 - Досвід роботи: {current_user.experience_years or "не вказано"} років
 - Про себе: {current_user.bio or "не вказано"}
-
 Вакансія:
 - Назва: {vacancy.title}
 - Компанія: {vacancy.company}
 - Опис: {vacancy.description}
-
 Напиши короткий, конкретний, персоналізований супровідний лист (3-4 абзаци), без зайвих загальних фраз."""
 
     response = await client.messages.create(
@@ -54,6 +49,12 @@ async def generate_cover_letter(
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )
+
+    if not response.content:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service returned empty response",
+        )
 
     return CoverLetterResponse(cover_letter=response.content[0].text)
 
@@ -63,11 +64,9 @@ async def get_matching_vacancies(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Vacancy).where(Vacancy.is_active == True)
-
+    query = select(Vacancy).where(Vacancy.is_active.is_(True))
     if current_user.city:
         query = query.where(Vacancy.city.ilike(f"%{current_user.city}%"))
-
     query = query.limit(20)
 
     result = await db.execute(query)
@@ -85,12 +84,9 @@ async def get_matching_vacancies(
 Стек технологій: {current_user.stack or "не вказано"}
 Досвід роботи: {current_user.experience_years or "не вказано"} років
 Про себе: {current_user.bio or "не вказано"}
-
 Ось список вакансій:
 {vacancies_text}
-
 Оціни наскільки кожна вакансія підходить кандидату за шкалою від 0 до 100 (match_score) і коротко поясни чому (reason).
-
 Поверни ВІДПОВІДЬ ТІЛЬКИ у форматі валідного JSON-масиву, без жодного додаткового тексту до чи після, у точному форматі:
 [{{"vacancy_id": 1, "match_score": 85, "reason": "..."}}]"""
 
@@ -100,22 +96,38 @@ async def get_matching_vacancies(
         messages=[{"role": "user", "content": prompt}],
     )
 
+    if not response.content:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI service returned empty response",
+        )
+
     raw_text = response.content[0].text
-    ai_results = json.loads(raw_text)
+
+    try:
+        ai_results = json.loads(raw_text)
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI service returned invalid JSON response",
+        )
 
     vacancies_by_id = {v.id: v for v in vacancies}
-
     matches = []
     for item in ai_results:
-        vacancy = vacancies_by_id.get(item["vacancy_id"])
+        vacancy = vacancies_by_id.get(item.get("vacancy_id"))
         if vacancy is None:
+            continue
+        match_score = item.get("match_score")
+        reason = item.get("reason")
+        if match_score is None or reason is None:
             continue
         matches.append(MatchedVacancy(
             vacancy_id=vacancy.id,
             title=vacancy.title,
             company=vacancy.company,
-            match_score=item["match_score"],
-            reason=item["reason"],
+            match_score=match_score,
+            reason=reason,
         ))
 
     return MatchingResponse(matches=matches)
