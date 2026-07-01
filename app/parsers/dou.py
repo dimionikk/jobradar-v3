@@ -1,12 +1,12 @@
 import httpx
 from bs4 import BeautifulSoup
+from app.parsers.utils import DEFAULT_HEADERS
 
 
 def parse_dou() -> list[dict]:
     url = "https://jobs.dou.ua/vacancies/"
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-    response = httpx.get(url, headers=headers, timeout=10)
+    response = httpx.get(url, headers=DEFAULT_HEADERS, timeout=10)
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, "html.parser")
