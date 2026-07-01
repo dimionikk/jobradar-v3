@@ -1,7 +1,5 @@
 import asyncio
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
 from app.core.database import asyncsessionLocal
 from app.parsers.remotive import parse_remotive
 from app.parsers.dou import parse_dou
@@ -15,17 +13,35 @@ scheduler = AsyncIOScheduler()
 async def run_parsers_job():
     print("Запуск парсерів...")
 
-    remotive_data = await parse_remotive()
-    dou_data = await asyncio.to_thread(parse_dou)
-    djinni_data = await asyncio.to_thread(parse_djinni)
-    workua_data = await asyncio.to_thread(parse_workua)
+    all_vacancies = []
 
-    all_vacancies = remotive_data + dou_data + djinni_data + workua_data
+    try:
+        all_vacancies += await parse_remotive()
+    except Exception as e:
+        print(f"Помилка парсингу Remotive: {e}")
+
+    try:
+        all_vacancies += await asyncio.to_thread(parse_dou)
+    except Exception as e:
+        print(f"Помилка парсингу DOU: {e}")
+
+    try:
+        all_vacancies += await asyncio.to_thread(parse_djinni)
+    except Exception as e:
+        print(f"Помилка парсингу Djinni: {e}")
+
+    try:
+        all_vacancies += await asyncio.to_thread(parse_workua)
+    except Exception as e:
+        print(f"Помилка парсингу Work.ua: {e}")
 
     async with asyncsessionLocal() as db:
         result = await save_vacancies(all_vacancies, db)
 
-    print(f"Парсинг завершено: нових {result['new']}, пропущено {result['skipped']}")
+    print(
+        f"Парсинг завершено: нових {result['new']}, "
+        f"пропущено {result['skipped']}, некоректних {result['invalid']}"
+    )
 
 
 scheduler.add_job(run_parsers_job, "interval", hours=6)
