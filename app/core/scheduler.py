@@ -1,6 +1,6 @@
 import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from app.core.database import asyncsessionLocal
+from app.core.database import AsyncSessionLocal
 from app.parsers.remotive import parse_remotive
 from app.parsers.dou import parse_dou
 from app.parsers.djinni import parse_djinni
@@ -35,7 +35,7 @@ async def run_parsers_job():
     except Exception as e:
         print(f"Помилка парсингу Work.ua: {e}")
 
-    async with asyncsessionLocal() as db:
+    async with AsyncSessionLocal() as db:
         result = await save_vacancies(all_vacancies, db)
 
     print(

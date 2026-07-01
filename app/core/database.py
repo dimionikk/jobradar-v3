@@ -7,16 +7,21 @@ async_engine = create_async_engine(
     echo=settings.DEBUG,
 )
 
-asyncsessionLocal = async_sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
     expire_on_commit=False,
     class_=AsyncSession,
-)   
+)
+
 
 class Base(DeclarativeBase):
     pass
 
+
 async def get_db():
-    async with asyncsessionLocal() as session:
-        yield session
-        
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
