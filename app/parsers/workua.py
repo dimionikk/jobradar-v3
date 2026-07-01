@@ -5,16 +5,19 @@ from bs4 import BeautifulSoup
 def parse_workua() -> list[dict]:
     url = "https://www.work.ua/jobs-it/"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    response = httpx.get(url, headers=headers)
+
+    response = httpx.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+
     soup = BeautifulSoup(response.text, "html.parser")
-
     vacancies = []
-    for card in soup.find_all("div", class_="job-link"):
 
+    for card in soup.find_all("div", class_="job-link"):
         title_tag = card.find("h2", class_="my-0")
         link_tag = title_tag.find("a") if title_tag else None
         title = link_tag.get_text(strip=True) if link_tag else None
-        job_url = "https://www.work.ua" + link_tag["href"] if link_tag else None
+        href = link_tag.get("href") if link_tag else None
+        job_url = f"https://www.work.ua{href}" if href else None
 
         strong_spans = card.find_all("span", class_="strong-600")
         if len(strong_spans) >= 2:
@@ -49,6 +52,7 @@ def parse_workua() -> list[dict]:
             "company": company,
             "city": city,
             "description": description,
+            "work_type": None,
             "source": "workua",
         }
         vacancies.append(vacancy)

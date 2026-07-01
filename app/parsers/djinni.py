@@ -6,11 +6,20 @@ from bs4 import BeautifulSoup
 def parse_djinni() -> list[dict]:
     url = "https://djinni.co/jobs/"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    response = httpx.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
 
+    response = httpx.get(url, headers=headers, timeout=10)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
     script_tag = soup.find("script", type="application/ld+json")
-    jobs_data = json.loads(script_tag.string)
+
+    if script_tag is None:
+        return []
+
+    try:
+        jobs_data = json.loads(script_tag.string)
+    except json.JSONDecodeError:
+        return []
 
     vacancies = []
     for job in jobs_data:
@@ -22,8 +31,9 @@ def parse_djinni() -> list[dict]:
 
         salary_info = job.get("baseSalary")
         if salary_info:
-            min_val = salary_info["value"].get("minValue")
-            max_val = salary_info["value"].get("maxValue")
+            salary_value = salary_info.get("value", {})
+            min_val = salary_value.get("minValue")
+            max_val = salary_value.get("maxValue")
             if min_val and max_val:
                 salary = f"${min_val}-${max_val}"
             elif max_val:
