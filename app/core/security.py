@@ -4,16 +4,20 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 from app.core.config import settings
 
+password_hasher = PasswordHasher()
+
+
 def hash_password(password: str) -> str:
-    ph = PasswordHasher()
-    return ph.hash(password)
+    return password_hasher.hash(password)
+
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    ph = PasswordHasher()
     try:
-        return ph.verify(hashed_password, password)
+        password_hasher.verify(hashed_password, password)
+        return True
     except VerifyMismatchError:
         return False
+
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -22,10 +26,10 @@ def create_access_token(data: dict) -> str:
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def verify_access_token(token: str) -> dict:
+
+def verify_access_token(token: str) -> dict | None:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except JWTError:
         return None
-    
