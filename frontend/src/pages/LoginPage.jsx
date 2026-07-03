@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function LoginPage() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -16,6 +17,10 @@ function LoginPage() {
       setError(err.message);
     }
   }
+
+if (isAuthenticated) {
+  return <Navigate to="/profile" />;
+}
 
   return (
     <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
@@ -40,6 +45,12 @@ function LoginPage() {
           Увійти
         </button>
       </form>
+      <p className="mt-4 text-sm">
+        Ще нема акаунта?{" "}
+        <Link to="/register" className="text-blue-600 underline">
+          Зареєструватись
+        </Link>
+      </p>
     </div>
   );
 }

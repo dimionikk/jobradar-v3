@@ -14,6 +14,7 @@ export function AuthProvider({ children }) {
 
   async function register(email, password) {
     await registerUser(email, password);
+    await login(email, password);
   }
 
   async function logout() {
@@ -39,4 +40,3 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
-

@@ -1,31 +1,26 @@
 import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function RegisterPage() {
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     try {
       await register(email, password);
-      setSuccess(true);
     } catch (err) {
       setError(err.message);
     }
   }
 
-  if (success) {
-    return (
-      <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
-        <p className="text-green-600">Реєстрація успішна! Тепер можеш увійти.</p>
-      </div>
-    );
-  }
+if (isAuthenticated) {
+  return <Navigate to="/profile" />;
+}
 
   return (
     <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
@@ -50,6 +45,12 @@ function RegisterPage() {
           Зареєструватись
         </button>
       </form>
+      <p className="mt-4 text-sm">
+        Вже є акаунт?{" "}
+        <Link to="/login" className="text-blue-600 underline">
+          Увійти
+        </Link>
+      </p>
     </div>
   );
 }
