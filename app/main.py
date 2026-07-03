@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers import auth, profile, ai, saved_vacancies, applications
+from app.routers import auth, profile, ai, saved_vacancies, applications, vacancies
 from contextlib import asynccontextmanager
 from app.core.scheduler import scheduler
 from app.core.redis_client import redis_client
@@ -30,3 +30,4 @@ app.include_router(profile.router)
 app.include_router(ai.router)
 app.include_router(saved_vacancies.router)
 app.include_router(applications.router)
+app.include_router(vacancies.router)
