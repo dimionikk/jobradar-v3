@@ -6,6 +6,7 @@ import VacanciesPage from "./pages/VacanciesPage";
 import SavedVacanciesPage from "./pages/SavedVacanciesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import ApplicationsPage from "./pages/ApplicationsPage";
 
 function Layout({ children }) {
   return (
@@ -43,6 +44,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout><SavedVacanciesPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applications"
+          element={
+            <ProtectedRoute>
+              <Layout><ApplicationsPage /></Layout>
             </ProtectedRoute>
           }
         />
