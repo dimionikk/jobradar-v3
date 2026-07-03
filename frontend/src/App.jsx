@@ -2,7 +2,19 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
+import VacanciesPage from "./pages/VacanciesPage";
+import SavedVacanciesPage from "./pages/SavedVacanciesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
+
+function Layout({ children }) {
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  );
+}
 
 function App() {
   return (
@@ -14,7 +26,23 @@ function App() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <ProfilePage />
+              <Layout><ProfilePage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vacancies"
+          element={
+            <ProtectedRoute>
+              <Layout><VacanciesPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/saved-vacancies"
+          element={
+            <ProtectedRoute>
+              <Layout><SavedVacanciesPage /></Layout>
             </ProtectedRoute>
           }
         />
