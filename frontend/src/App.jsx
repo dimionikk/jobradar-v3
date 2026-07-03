@@ -7,6 +7,7 @@ import SavedVacanciesPage from "./pages/SavedVacanciesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ApplicationsPage from "./pages/ApplicationsPage";
+import MatchingPage from "./pages/MatchingPage";
 
 function Layout({ children }) {
   return (
@@ -52,6 +53,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Layout><ApplicationsPage /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/matching"
+          element={
+            <ProtectedRoute>
+              <Layout><MatchingPage /></Layout>
             </ProtectedRoute>
           }
         />

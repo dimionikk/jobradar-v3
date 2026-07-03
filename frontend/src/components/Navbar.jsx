@@ -10,6 +10,7 @@ function Navbar() {
       <Link to="/saved-vacancies" className="text-blue-600 underline">Збережені</Link>
       <Link to="/applications" className="text-blue-600 underline">Заявки</Link>
       <Link to="/profile" className="text-blue-600 underline">Профіль</Link>
+      <Link to="/matching" className="text-blue-600 underline">AI-підбір</Link>
       <button onClick={logout} className="ml-auto text-red-600">Вийти</button>
     </nav>
   );
