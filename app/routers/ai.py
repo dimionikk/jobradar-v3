@@ -102,10 +102,18 @@ async def get_matching_vacancies(
             detail="AI service returned empty response",
         )
 
-    raw_text = response.content[0].text
+    raw_text = response.content[0].text.strip()
+
+
+    if raw_text.startswith("```"):
+        raw_text = raw_text.strip("`")
+        if raw_text.startswith("json"):
+            raw_text = raw_text[4:]
+        raw_text = raw_text.strip()
 
     try:
         ai_results = json.loads(raw_text)
+        
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
