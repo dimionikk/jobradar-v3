@@ -21,6 +21,12 @@ export async function apiRequest(endpoint, options = {}) {
     headers,
   });
 
+  if (response.status === 401) {
+    localStorage.removeItem("access_token");
+    window.location.href = "/login";
+    return new Promise(() => {});
+  }
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
     throw new Error(errorData?.detail || "Щось пішло не так");
