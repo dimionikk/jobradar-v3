@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { getVacancies } from "../api/vacancies";
-import { saveVacancy } from "../api/savedVacancies";
-import { createApplication } from "../api/applications";
+import { saveVacancy, getSavedVacancies } from "../api/savedVacancies";
+import { createApplication, getApplications } from "../api/applications";
 
 function VacanciesPage() {
   const [vacancies, setVacancies] = useState([]);
@@ -10,6 +10,15 @@ function VacanciesPage() {
   const [appliedIds, setAppliedIds] = useState(new Set());
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([getSavedVacancies(), getApplications()])
+      .then(([saved, applications]) => {
+        setSavedIds(new Set(saved.map((v) => v.id)));
+        setAppliedIds(new Set(applications.map((a) => a.vacancy.id)));
+      })
+      .catch((err) => setError(err.message));
+  }, []);
 
   useEffect(() => {
     setLoading(true);
