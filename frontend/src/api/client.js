@@ -1,7 +1,9 @@
 const API_URL = "https://89-167-93-204.nip.io";
+const TOKEN_KEY = "access_token";
+const LOGIN_PATH = "/login";
 
 function getToken() {
-  return localStorage.getItem("access_token");
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 export async function apiRequest(endpoint, options = {}) {
@@ -9,7 +11,6 @@ export async function apiRequest(endpoint, options = {}) {
 
   const headers = {
     "Content-Type": "application/json",
-    ...options.headers,
   };
 
   if (token) {
@@ -21,9 +22,9 @@ export async function apiRequest(endpoint, options = {}) {
     headers,
   });
 
-  if (response.status === 401) {
-    localStorage.removeItem("access_token");
-    window.location.href = "/login";
+  if (response.status === 401 && token) {
+    localStorage.removeItem(TOKEN_KEY);
+    window.location.href = LOGIN_PATH;
     return new Promise(() => {});
   }
 

@@ -1,20 +1,22 @@
 import { apiRequest } from "./client";
 
+const APPLICATIONS_PATH = "/applications";
+
 export function getApplications() {
-  return apiRequest("/applications/");
+  return apiRequest(`${APPLICATIONS_PATH}/`);
 }
 
 export function createApplication(vacancyId) {
-  return apiRequest(`/applications/${vacancyId}`, { method: "POST" });
+  return apiRequest(`${APPLICATIONS_PATH}/${vacancyId}`, { method: "POST" });
 }
 
 export function updateApplication(applicationId, data) {
-  return apiRequest(`/applications/${applicationId}`, {
+  return apiRequest(`${APPLICATIONS_PATH}/${applicationId}`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
 export function deleteApplication(applicationId) {
-  return apiRequest(`/applications/${applicationId}`, { method: "DELETE" });
+  return apiRequest(`${APPLICATIONS_PATH}/${applicationId}`, { method: "DELETE" });
 }

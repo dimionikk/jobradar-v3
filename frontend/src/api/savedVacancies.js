@@ -1,13 +1,15 @@
 import { apiRequest } from "./client";
 
+const SAVED_VACANCIES_PATH = "/saved-vacancies";
+
 export function getSavedVacancies() {
-  return apiRequest("/saved-vacancies/");
+  return apiRequest(`${SAVED_VACANCIES_PATH}/`);
 }
 
 export function saveVacancy(vacancyId) {
-  return apiRequest(`/saved-vacancies/${vacancyId}`, { method: "POST" });
+  return apiRequest(`${SAVED_VACANCIES_PATH}/${vacancyId}`, { method: "POST" });
 }
 
 export function removeSavedVacancy(vacancyId) {
-  return apiRequest(`/saved-vacancies/${vacancyId}`, { method: "DELETE" });
+  return apiRequest(`${SAVED_VACANCIES_PATH}/${vacancyId}`, { method: "DELETE" });
 }
