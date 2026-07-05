@@ -3,6 +3,8 @@ import { getVacancies } from "../api/vacancies";
 import { saveVacancy, getSavedVacancies } from "../api/savedVacancies";
 import { createApplication, getApplications } from "../api/applications";
 
+const SOURCES = ["djinni", "dou", "remotive", "workua"];
+
 function VacanciesPage() {
   const [vacancies, setVacancies] = useState([]);
   const [error, setError] = useState("");
@@ -10,6 +12,19 @@ function VacanciesPage() {
   const [appliedIds, setAppliedIds] = useState(new Set());
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [city, setCity] = useState("");
+  const [source, setSource] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     Promise.all([getSavedVacancies(), getApplications()])
@@ -22,11 +37,21 @@ function VacanciesPage() {
 
   useEffect(() => {
     setLoading(true);
-    getVacancies({ page })
+    getVacancies({ search, city, source, page })
       .then(setVacancies)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [page]);
+  }, [search, city, source, page]);
+
+  function handleCityChange(value) {
+    setCity(value);
+    setPage(1);
+  }
+
+  function handleSourceChange(value) {
+    setSource(value);
+    setPage(1);
+  }
 
   async function handleSave(id) {
     try {
@@ -54,8 +79,39 @@ function VacanciesPage() {
     <div className="max-w-2xl mx-auto mt-10 p-6">
       <h1 className="text-2xl font-bold mb-4">Вакансії</h1>
 
+      <div className="flex flex-col gap-2 mb-6">
+        <input
+          type="text"
+          placeholder="Пошук за назвою чи описом"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="border p-2 rounded"
+        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Місто"
+            value={city}
+            onChange={(e) => handleCityChange(e.target.value)}
+            className="border p-2 rounded flex-1"
+          />
+          <select
+            value={source}
+            onChange={(e) => handleSourceChange(e.target.value)}
+            className="border p-2 rounded"
+          >
+            <option value="">Усі джерела</option>
+            {SOURCES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {loading ? (
         <p>Завантаження...</p>
+      ) : vacancies.length === 0 ? (
+        <p>Нічого не знайдено.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {vacancies.map((v) => (
