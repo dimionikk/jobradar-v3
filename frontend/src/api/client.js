@@ -1,7 +1,6 @@
-import { TOKEN_KEY } from "./constants";
+import { TOKEN_KEY, LOGIN_PATH } from "./constants";
 
 const API_URL = "https://89-167-93-204.nip.io";
-const LOGIN_PATH = "/login";
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
