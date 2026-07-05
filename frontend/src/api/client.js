@@ -1,4 +1,5 @@
-import { TOKEN_KEY, LOGIN_PATH } from "./constants";
+import { TOKEN_KEY } from "./constants";
+import { ROUTES } from "../routes";
 
 const API_URL = "https://89-167-93-204.nip.io";
 
@@ -24,7 +25,7 @@ export async function apiRequest(endpoint, options = {}) {
 
   if (response.status === 401 && token) {
     localStorage.removeItem(TOKEN_KEY);
-    window.location.href = LOGIN_PATH;
+    window.location.href = ROUTES.LOGIN;
     return new Promise(() => {});
   }
 

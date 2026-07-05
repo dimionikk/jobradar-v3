@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import ApplicationsPage from "./pages/ApplicationsPage";
 import MatchingPage from "./pages/MatchingPage";
+import { ROUTES } from "./routes";
 
 function Layout({ children }) {
   return (
@@ -22,10 +23,10 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
         <Route
-          path="/profile"
+          path={ROUTES.PROFILE}
           element={
             <ProtectedRoute>
               <Layout><ProfilePage /></Layout>
@@ -33,7 +34,7 @@ function App() {
           }
         />
         <Route
-          path="/vacancies"
+          path={ROUTES.VACANCIES}
           element={
             <ProtectedRoute>
               <Layout><VacanciesPage /></Layout>
@@ -41,7 +42,7 @@ function App() {
           }
         />
         <Route
-          path="/saved-vacancies"
+          path={ROUTES.SAVED_VACANCIES}
           element={
             <ProtectedRoute>
               <Layout><SavedVacanciesPage /></Layout>
@@ -49,7 +50,7 @@ function App() {
           }
         />
         <Route
-          path="/applications"
+          path={ROUTES.APPLICATIONS}
           element={
             <ProtectedRoute>
               <Layout><ApplicationsPage /></Layout>
@@ -57,14 +58,14 @@ function App() {
           }
         />
         <Route
-          path="/matching"
+          path={ROUTES.MATCHING}
           element={
             <ProtectedRoute>
               <Layout><MatchingPage /></Layout>
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to={ROUTES.LOGIN} />} />
       </Routes>
     </BrowserRouter>
   );
