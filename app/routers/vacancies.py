@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
@@ -12,8 +12,10 @@ router = APIRouter(prefix="/vacancies", tags=["Vacancies"])
 
 @router.get("/", response_model=list[VacancyOut])
 async def get_vacancies(
+    search: str | None = None,
     city: str | None = None,
     source: str | None = None,
+    work_type: str | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
@@ -21,10 +23,19 @@ async def get_vacancies(
 ):
     query = select(Vacancy).where(Vacancy.is_active.is_(True))
 
+    if search:
+        query = query.where(
+            or_(
+                Vacancy.title.ilike(f"%{search}%"),
+                Vacancy.description.ilike(f"%{search}%"),
+            )
+        )
     if city:
         query = query.where(Vacancy.city.ilike(f"%{city}%"))
     if source:
         query = query.where(Vacancy.source == source)
+    if work_type:
+        query = query.where(Vacancy.work_type.ilike(f"%{work_type}%"))
 
     query = query.order_by(Vacancy.created_at.desc())
     query = query.offset((page - 1) * page_size).limit(page_size)
