@@ -25,6 +25,11 @@ services:
   redis:
     image: valkey/valkey:8
     restart: always
+  frontend:
+    build: ./frontend
+    expose:
+      - "80"
+    restart: always
   nginx:
     image: nginx:latest
     ports:
@@ -35,6 +40,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - app
+      - frontend
     restart: always
 volumes:
   postgres_data:
