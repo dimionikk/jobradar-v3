@@ -1,5 +1,6 @@
+import { TOKEN_KEY } from "./constants";
+
 const API_URL = "https://89-167-93-204.nip.io";
-const TOKEN_KEY = "access_token";
 const LOGIN_PATH = "/login";
 
 function getToken() {

@@ -1,14 +1,15 @@
 import { createContext, useContext, useState } from "react";
 import { loginUser, registerUser, logoutUser } from "../api/auth";
+import { TOKEN_KEY } from "../api/constants";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem("access_token"));
+  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY));
 
   async function login(email, password) {
     const result = await loginUser(email, password);
-    localStorage.setItem("access_token", result.access_token);
+    localStorage.setItem(TOKEN_KEY, result.access_token);
     setToken(result.access_token);
   }
 
@@ -21,7 +22,7 @@ export function AuthProvider({ children }) {
     try {
       await logoutUser();
     } finally {
-      localStorage.removeItem("access_token");
+      localStorage.removeItem(TOKEN_KEY);
       setToken(null);
     }
   }
