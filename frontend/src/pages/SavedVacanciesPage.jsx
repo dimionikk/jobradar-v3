@@ -29,33 +29,46 @@ function SavedVacanciesPage() {
   }
 
   if (loadError) {
-    return <p className="text-red-600 p-6">{loadError}</p>;
+    return <p className="text-danger p-6">{loadError}</p>;
   }
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6">
-      <h1 className="text-2xl font-bold mb-4">Збережені вакансії</h1>
+    <div className="max-w-3xl mx-auto px-6 py-8">
+      <h1 className="text-xl font-semibold mb-6">Збережені вакансії</h1>
 
-      {actionError && <p className="text-red-600 mb-4">{actionError}</p>}
+      {actionError && (
+        <p className="text-sm text-danger border-l-2 border-danger pl-3 mb-4">
+          {actionError}
+        </p>
+      )}
 
       {loading ? (
-        <p>Завантаження...</p>
+        <p className="text-text-dim text-sm">Завантаження...</p>
       ) : vacancies.length === 0 ? (
-        <p>Нема збережених вакансій.</p>
+        <p className="text-text-dim text-sm">Нема збережених вакансій.</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {vacancies.map((v) => (
-            <div key={v.id} className="border p-4 rounded">
-              <h2 className="font-semibold">{v.title}</h2>
-              <p className="text-sm">{v.company || "Компанія не вказана"}</p>
-              <div className="flex gap-3 mt-2">
-                <a href={v.url} target="_blank" className="text-blue-600 underline text-sm">
+            <div
+              key={v.id}
+              className="bg-surface border border-line rounded-lg p-4 hover:border-signal-dim transition-colors"
+            >
+              <h2 className="font-medium text-text">{v.title}</h2>
+              <p className="text-sm text-text-dim">{v.company || "Компанія не вказана"}</p>
+
+              <div className="flex gap-4 mt-3 pt-3 border-t border-line text-sm">
+                <a
+                  href={v.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-text-dim hover:text-text transition-colors"
+                >
                   Переглянути
                 </a>
                 <button
                   onClick={() => handleRemove(v.id)}
                   disabled={removingId === v.id}
-                  className="text-sm text-red-600 disabled:text-gray-400"
+                  className="text-danger hover:opacity-80 disabled:text-text-dim transition-colors"
                 >
                   {removingId === v.id ? "Видаляю..." : "Прибрати"}
                 </button>

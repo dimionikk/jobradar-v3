@@ -2,6 +2,18 @@ import { useState, useEffect } from "react";
 import { getProfile, updateProfile } from "../api/profile";
 import { useAuth } from "../context/AuthContext";
 
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs text-text-dim uppercase tracking-wide">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inputClass =
+  "bg-surface-raised border border-line rounded px-3 py-2 text-text placeholder:text-text-dim focus:outline-none focus:ring-1 focus:ring-signal focus:border-signal transition-colors";
+
 function ProfilePage() {
   const { logout } = useAuth();
   const [profile, setProfile] = useState(null);
@@ -60,11 +72,11 @@ function ProfilePage() {
 
   if (loadError) {
     return (
-      <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
-        <p className="text-red-600 mb-4">{loadError}</p>
+      <div className="max-w-md mx-auto mt-20 px-6">
+        <p className="text-danger mb-4">{loadError}</p>
         <button
           onClick={logout}
-          className="bg-red-600 text-white p-2 rounded w-full"
+          className="bg-danger text-ink font-medium rounded px-4 py-2.5 w-full"
         >
           Вийти
         </button>
@@ -73,79 +85,97 @@ function ProfilePage() {
   }
 
   if (!profile) {
-    return (
-      <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
-        <p>Завантаження...</p>
-      </div>
-    );
+    return <p className="text-text-dim text-sm p-8 text-center">Завантаження...</p>;
   }
 
   return (
-    <div className="max-w-sm mx-auto mt-10 p-6 border rounded">
-      <h1 className="text-2xl font-bold mb-4">Профіль</h1>
-      <p className="text-sm text-gray-600 mb-4">{profile.email}</p>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="text"
-          placeholder="Стек технологій"
-          value={form.stack}
-          onChange={(e) => handleChange("stack", e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="number"
-          placeholder="Років досвіду"
-          value={form.experience_years}
-          onChange={(e) => handleChange("experience_years", e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="number"
-          placeholder="Бажана зарплата ($)"
-          value={form.salary_expectation}
-          onChange={(e) => handleChange("salary_expectation", e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Місто"
-          value={form.city}
-          onChange={(e) => handleChange("city", e.target.value)}
-          className="border p-2 rounded"
-        />
-        <input
-          type="text"
-          placeholder="Формат роботи (remote/office/hybrid)"
-          value={form.work_type}
-          onChange={(e) => handleChange("work_type", e.target.value)}
-          className="border p-2 rounded"
-        />
-        <textarea
-          placeholder="Про себе"
-          value={form.bio}
-          onChange={(e) => handleChange("bio", e.target.value)}
-          className="border p-2 rounded"
-          rows={3}
-        />
-        <textarea
-          placeholder="Текст резюме"
-          value={form.resume_text}
-          onChange={(e) => handleChange("resume_text", e.target.value)}
-          className="border p-2 rounded"
-          rows={4}
-        />
-        {saveError && <p className="text-red-600">{saveError}</p>}
+    <div className="max-w-md mx-auto px-6 py-8">
+      <h1 className="text-xl font-semibold">Профіль</h1>
+      <p className="text-sm text-text-dim font-mono mb-6">{profile.email}</p>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field label="Стек технологій">
+          <input
+            type="text"
+            value={form.stack}
+            onChange={(e) => handleChange("stack", e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Років досвіду">
+            <input
+              type="number"
+              value={form.experience_years}
+              onChange={(e) => handleChange("experience_years", e.target.value)}
+              className={`${inputClass} font-mono`}
+            />
+          </Field>
+          <Field label="ЗП, $">
+            <input
+              type="number"
+              value={form.salary_expectation}
+              onChange={(e) => handleChange("salary_expectation", e.target.value)}
+              className={`${inputClass} font-mono`}
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Місто">
+            <input
+              type="text"
+              value={form.city}
+              onChange={(e) => handleChange("city", e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <Field label="Формат роботи">
+            <input
+              type="text"
+              placeholder="remote/office"
+              value={form.work_type}
+              onChange={(e) => handleChange("work_type", e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        <Field label="Про себе">
+          <textarea
+            value={form.bio}
+            onChange={(e) => handleChange("bio", e.target.value)}
+            className={inputClass}
+            rows={3}
+          />
+        </Field>
+
+        <Field label="Текст резюме">
+          <textarea
+            value={form.resume_text}
+            onChange={(e) => handleChange("resume_text", e.target.value)}
+            className={inputClass}
+            rows={4}
+          />
+        </Field>
+
+        {saveError && (
+          <p className="text-sm text-danger border-l-2 border-danger pl-3">{saveError}</p>
+        )}
+
         <button
           type="submit"
           disabled={saving}
-          className="bg-blue-600 text-white p-2 rounded disabled:bg-gray-400"
+          className="bg-signal text-ink font-medium rounded px-4 py-2.5 hover:bg-signal-dim disabled:bg-surface-raised disabled:text-text-dim transition-colors"
         >
           {saving ? "Зберігаю..." : "Зберегти"}
         </button>
       </form>
+
       <button
         onClick={logout}
-        className="mt-4 bg-red-600 text-white p-2 rounded w-full"
+        className="mt-3 w-full text-sm text-text-dim hover:text-danger transition-colors py-2"
       >
         Вийти
       </button>
