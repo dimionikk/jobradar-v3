@@ -4,10 +4,12 @@ import { saveVacancy, getSavedVacancies } from "../api/savedVacancies";
 import { createApplication, getApplications } from "../api/applications";
 
 const SOURCES = ["djinni", "dou", "remotive", "workua"];
+const PAGE_SIZE = 20;
 
 function VacanciesPage() {
   const [vacancies, setVacancies] = useState([]);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [savedIds, setSavedIds] = useState(new Set());
   const [appliedIds, setAppliedIds] = useState(new Set());
   const [page, setPage] = useState(1);
@@ -32,14 +34,14 @@ function VacanciesPage() {
         setSavedIds(new Set(saved.map((v) => v.id)));
         setAppliedIds(new Set(applications.map((a) => a.vacancy.id)));
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => setLoadError(err.message));
   }, []);
 
   useEffect(() => {
     setLoading(true);
     getVacancies({ search, city, source, page })
       .then(setVacancies)
-      .catch((err) => setError(err.message))
+      .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
   }, [search, city, source, page]);
 
@@ -54,25 +56,27 @@ function VacanciesPage() {
   }
 
   async function handleSave(id) {
+    setActionError("");
     try {
       await saveVacancy(id);
       setSavedIds((prev) => new Set(prev).add(id));
     } catch (err) {
-      setError(err.message);
+      setActionError(err.message);
     }
   }
 
   async function handleApply(id) {
+    setActionError("");
     try {
       await createApplication(id);
       setAppliedIds((prev) => new Set(prev).add(id));
     } catch (err) {
-      setError(err.message);
+      setActionError(err.message);
     }
   }
 
-  if (error) {
-    return <p className="text-red-600 p-6">{error}</p>;
+  if (loadError) {
+    return <p className="text-red-600 p-6">{loadError}</p>;
   }
 
   return (
@@ -107,6 +111,8 @@ function VacanciesPage() {
           </select>
         </div>
       </div>
+
+      {actionError && <p className="text-red-600 mb-4">{actionError}</p>}
 
       {loading ? (
         <p>Завантаження...</p>
@@ -154,7 +160,7 @@ function VacanciesPage() {
         <span className="text-sm text-gray-600">Сторінка {page}</span>
         <button
           onClick={() => setPage((p) => p + 1)}
-          disabled={vacancies.length < 20 || loading}
+          disabled={vacancies.length < PAGE_SIZE || loading}
           className="text-sm text-blue-600 disabled:text-gray-400"
         >
           Далі →

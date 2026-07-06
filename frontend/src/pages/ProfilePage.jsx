@@ -5,7 +5,8 @@ import { useAuth } from "../context/AuthContext";
 function ProfilePage() {
   const { logout } = useAuth();
   const [profile, setProfile] = useState(null);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     stack: "",
@@ -31,7 +32,7 @@ function ProfilePage() {
           resume_text: data.resume_text || "",
         });
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => setLoadError(err.message));
   }, []);
 
   function handleChange(field, value) {
@@ -40,7 +41,7 @@ function ProfilePage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
+    setSaveError("");
     setSaving(true);
     try {
       const payload = {
@@ -51,16 +52,22 @@ function ProfilePage() {
       const updated = await updateProfile(payload);
       setProfile(updated);
     } catch (err) {
-      setError(err.message);
+      setSaveError(err.message);
     } finally {
       setSaving(false);
     }
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="max-w-sm mx-auto mt-20 p-6 border rounded">
-        <p className="text-red-600">{error}</p>
+        <p className="text-red-600 mb-4">{loadError}</p>
+        <button
+          onClick={logout}
+          className="bg-red-600 text-white p-2 rounded w-full"
+        >
+          Вийти
+        </button>
       </div>
     );
   }
@@ -77,7 +84,6 @@ function ProfilePage() {
     <div className="max-w-sm mx-auto mt-10 p-6 border rounded">
       <h1 className="text-2xl font-bold mb-4">Профіль</h1>
       <p className="text-sm text-gray-600 mb-4">{profile.email}</p>
-
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input
           type="text"
@@ -128,9 +134,7 @@ function ProfilePage() {
           className="border p-2 rounded"
           rows={4}
         />
-
-        {error && <p className="text-red-600">{error}</p>}
-
+        {saveError && <p className="text-red-600">{saveError}</p>}
         <button
           type="submit"
           disabled={saving}
@@ -139,7 +143,6 @@ function ProfilePage() {
           {saving ? "Зберігаю..." : "Зберегти"}
         </button>
       </form>
-
       <button
         onClick={logout}
         className="mt-4 bg-red-600 text-white p-2 rounded w-full"
