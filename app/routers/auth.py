@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from app.core.limiter import limiter
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +21,8 @@ class TokenResponse(BaseModel):
 
 
 @router.post("/register", response_model=UserOut)
-async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register_user(request: Request, user: UserCreate, db: AsyncSession = Depends(get_db)):
     results = await db.execute(select(User).where(User.email == user.email))
     existing_user = results.scalar_one_or_none()
     if existing_user: 
@@ -34,7 +36,8 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login_user(request: Request, user: UserLogin, db: AsyncSession = Depends(get_db)):
     results = await db.execute(select(User).where(User.email == user.email))
     existing_user = results.scalar_one_or_none()
     if not existing_user or not verify_password(user.password, existing_user.hashed_password):

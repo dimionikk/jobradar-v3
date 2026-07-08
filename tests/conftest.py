@@ -17,7 +17,10 @@ os.environ["DATABASE_URL"] = (
 from app.main import app
 from app.core.database import Base, get_db
 from app.core.redis_client import redis_client
+from app.core.limiter import limiter
 from app.models.vacancy import Vacancy
+
+limiter.enabled = False
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -82,5 +85,4 @@ async def seed_vacancies():
             await session.commit()
         await engine.dispose()
         return ids
-
     return _seed
