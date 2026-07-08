@@ -7,6 +7,7 @@ import json
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.config import settings
+from app.core.redis_client import redis_client
 from app.models.user import User
 from app.models.vacancy import Vacancy
 from app.schemas.ai import (
@@ -18,6 +19,8 @@ from app.schemas.ai import (
 
 router = APIRouter(prefix="/ai", tags=["AI"])
 client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+MATCHING_CACHE_TTL = 3600
 
 
 @router.post("/cover-letter", response_model=CoverLetterResponse)
@@ -64,6 +67,11 @@ async def get_matching_vacancies(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    cache_key = f"matching:{current_user.id}"
+    cached = await redis_client.get(cache_key)
+    if cached:
+        return MatchingResponse.model_validate_json(cached)
+
     query = select(Vacancy).where(Vacancy.is_active.is_(True))
     if current_user.city:
         query = query.where(Vacancy.city.ilike(f"%{current_user.city}%"))
@@ -104,7 +112,6 @@ async def get_matching_vacancies(
 
     raw_text = response.content[0].text.strip()
 
-
     if raw_text.startswith("```"):
         raw_text = raw_text.strip("`")
         if raw_text.startswith("json"):
@@ -113,7 +120,6 @@ async def get_matching_vacancies(
 
     try:
         ai_results = json.loads(raw_text)
-        
     except json.JSONDecodeError:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -138,4 +144,12 @@ async def get_matching_vacancies(
             reason=reason,
         ))
 
-    return MatchingResponse(matches=matches)
+    matching_response = MatchingResponse(matches=matches)
+
+    await redis_client.set(
+        cache_key,
+        matching_response.model_dump_json(),
+        ex=MATCHING_CACHE_TTL,
+    )
+
+    return matching_response

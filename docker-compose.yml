@@ -7,6 +7,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://jobradar_own:${POSTGRES_PASSWORD}@db:5432/jobradar-db
       - REDIS_URL=redis://redis:6379
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY}
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
     depends_on:
@@ -14,7 +15,7 @@ services:
       - redis
     restart: always
   db:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     ports:
       - "5433:5432"
     environment:
