@@ -75,6 +75,7 @@ async def seed_vacancies():
                     "company": "TestCorp",
                     "city": "Kyiv",
                     "source": "djinni",
+                    "embedding": [0.1] * 1024,
                     **overrides,
                 }
                 data["url"] = f"https://example.com/vacancy/{uuid.uuid4()}"
@@ -86,3 +87,16 @@ async def seed_vacancies():
         await engine.dispose()
         return ids
     return _seed
+
+@pytest_asyncio.fixture(autouse=True)
+def mock_embeddings(mocker):
+    fake_vector = [0.1] * 1024
+
+    async def fake_embed_documents(texts):
+        return [fake_vector for _ in texts]
+
+    async def fake_embed_query(text):
+        return fake_vector
+
+    mocker.patch("app.services.parser.embed_documents", side_effect=fake_embed_documents)
+    mocker.patch("app.routers.vacancies.embed_query", side_effect=fake_embed_query)

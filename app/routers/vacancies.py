@@ -6,6 +6,7 @@ from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.vacancy import Vacancy
 from app.schemas.vacancy import VacancyOut
+from app.services.embeddings import embed_query
 
 router = APIRouter(prefix="/vacancies", tags=["Vacancies"])
 
@@ -23,13 +24,6 @@ async def get_vacancies(
 ):
     query = select(Vacancy).where(Vacancy.is_active.is_(True))
 
-    if search:
-        query = query.where(
-            or_(
-                Vacancy.title.ilike(f"%{search}%"),
-                Vacancy.description.ilike(f"%{search}%"),
-            )
-        )
     if city:
         query = query.where(Vacancy.city.ilike(f"%{city}%"))
     if source:
@@ -37,7 +31,22 @@ async def get_vacancies(
     if work_type:
         query = query.where(Vacancy.work_type.ilike(f"%{work_type}%"))
 
-    query = query.order_by(Vacancy.created_at.desc())
+    if search:
+        try:
+            query_vector = await embed_query(search)
+            query = query.where(Vacancy.embedding.is_not(None))
+            query = query.order_by(Vacancy.embedding.cosine_distance(query_vector))
+        except Exception:
+            query = query.where(
+                or_(
+                    Vacancy.title.ilike(f"%{search}%"),
+                    Vacancy.description.ilike(f"%{search}%"),
+                )
+            )
+            query = query.order_by(Vacancy.created_at.desc())
+    else:
+        query = query.order_by(Vacancy.created_at.desc())
+
     query = query.offset((page - 1) * page_size).limit(page_size)
 
     result = await db.execute(query)

@@ -21,9 +21,17 @@ async def test_search_filter(client, auth_headers, seed_vacancies):
     await seed_vacancies(count=1, title="Python Backend Engineer")
 
     response = await client.get("/vacancies/?search=Python", headers=auth_headers)
+    assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert "Python" in data[0]["title"]
+    assert len(data) == 2
+
+
+async def test_search_excludes_vacancies_without_embedding(client, auth_headers, seed_vacancies):
+    await seed_vacancies(count=1, embedding=None)
+
+    response = await client.get("/vacancies/?search=Python", headers=auth_headers)
+    assert response.status_code == 200
+    assert response.json() == []
 
 
 async def test_city_filter(client, auth_headers, seed_vacancies):
