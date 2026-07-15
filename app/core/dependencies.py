@@ -45,4 +45,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     if user is None:
         raise credentials_error
 
+    if not user.is_active:
+        raise credentials_error
+
     return user
