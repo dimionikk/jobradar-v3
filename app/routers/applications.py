@@ -1,7 +1,11 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+
 from app.schemas.applications import ApplicationOut, ApplicationUpdate
 from app.schemas.common import MessageResponse
 from app.core.database import get_db
@@ -9,6 +13,8 @@ from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.vacancy import Vacancy
 from app.models.applications import Application
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
@@ -26,21 +32,18 @@ async def create_application(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vacancy not found",
         )
-    existing_result = await db.execute(
-        select(Application).where(
-            Application.user_id == current_user.id,
-            Application.vacancy_id == vacancy_id,
-        )
-    )
-    existing = existing_result.scalar_one_or_none()
-    if existing:
+
+    new_application = Application(user_id=current_user.id, vacancy_id=vacancy_id)
+    db.add(new_application)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Application already exists for this vacancy",
         )
-    new_application = Application(user_id=current_user.id, vacancy_id=vacancy_id)
-    db.add(new_application)
-    await db.commit()
+
     return {"message": "Application created successfully"}
 
 
@@ -79,10 +82,21 @@ async def update_application(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Application not found",
         )
+
     update_data = request.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(application, field, value)
-    await db.commit()
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        logger.exception("Failed to update application_id=%s", application_id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not update application with the provided data",
+        )
+
     await db.refresh(application)
     return application
 

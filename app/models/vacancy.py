@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import func, String, Text
+from sqlalchemy import func, String, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -24,3 +24,7 @@ class Vacancy(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     parsed_at: Mapped[datetime] = mapped_column(server_default=func.now())
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024), nullable=True)
+
+    __table_args__ = (
+        Index("ix_vacancies_active_source", "is_active", "source"),
+    )

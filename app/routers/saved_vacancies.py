@@ -1,6 +1,10 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -8,6 +12,8 @@ from app.models.vacancy import Vacancy
 from app.models.saved_vacancy import SavedVacancy
 from app.schemas.vacancy import VacancyOut
 from app.schemas.common import MessageResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/saved-vacancies", tags=["Saved Vacancies"])
 
@@ -25,21 +31,18 @@ async def save_vacancy(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vacancy not found",
         )
-    existing_result = await db.execute(
-        select(SavedVacancy).where(
-            SavedVacancy.user_id == current_user.id,
-            SavedVacancy.vacancy_id == vacancy_id,
-        )
-    )
-    existing = existing_result.scalar_one_or_none()
-    if existing:
+
+    new_saved = SavedVacancy(user_id=current_user.id, vacancy_id=vacancy_id)
+    db.add(new_saved)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Vacancy already saved",
         )
-    new_saved = SavedVacancy(user_id=current_user.id, vacancy_id=vacancy_id)
-    db.add(new_saved)
-    await db.commit()
+
     return {"message": "Vacancy saved successfully"}
 
 
