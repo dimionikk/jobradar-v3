@@ -10,14 +10,13 @@ services:
       - VOYAGE_API_KEY=${VOYAGE_API_KEY}
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
+      - CORS_ORIGINS=https://app.89-167-93-204.nip.io
     depends_on:
       - db
       - redis
     restart: always
   db:
     image: pgvector/pgvector:pg16
-    ports:
-      - "5433:5432"
     environment:
       - POSTGRES_USER=jobradar_own
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

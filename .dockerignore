@@ -1,8 +1,14 @@
 .venv/
 .env
 .env.becap
+.env.example
 *.pyc
 __pycache__/
 .git/
 .gitignore
 README.md
+tests/
+.pytest_cache/
+frontend/
+.github/
+*.md
