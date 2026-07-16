@@ -1,7 +1,7 @@
 import { TOKEN_KEY, REFRESH_TOKEN_KEY } from "./constants";
 import { ROUTES } from "../routes";
 
-const API_URL = "https://89-167-93-204.nip.io";
+const API_URL = "https://178-104-16-233.nip.io";
 
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);

@@ -10,7 +10,7 @@ services:
       - VOYAGE_API_KEY=${VOYAGE_API_KEY}
       - SECRET_KEY=${SECRET_KEY}
       - ALGORITHM=${ALGORITHM}
-      - CORS_ORIGINS=https://app.89-167-93-204.nip.io
+      - CORS_ORIGINS=https://app.178-104-16-233.nip.io
     depends_on:
       - db
       - redis
