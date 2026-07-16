@@ -19,7 +19,10 @@ def _extract_city(job: dict) -> str | None:
         return None
     address = location.get("address")
     if isinstance(address, dict):
-        return address.get("addressLocality") or address.get("addressRegion")
+        value = address.get("addressLocality") or address.get("addressRegion")
+        if isinstance(value, list):
+            value = value[0] if value else None
+        return value if isinstance(value, str) else None
     if isinstance(address, str):
         return address
     return None
