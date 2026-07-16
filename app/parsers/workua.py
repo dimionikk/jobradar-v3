@@ -1,4 +1,5 @@
 import logging
+import re
 
 import httpx
 from bs4 import BeautifulSoup
@@ -8,6 +9,23 @@ from app.parsers.utils import DEFAULT_HEADERS
 logger = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT = 10
+
+# Підтверджено на одному зразку: опис часто починається з "Тип зайнятості. Досвід роботи ... ."
+# перед реальним текстом. Якщо на ширшій вибірці патерн не спрацює — description
+# просто лишиться нерозбитим (fallback у кінці функції).
+_META_PREFIX_RE = re.compile(r"^([^.]+\.)\s*([^.]*досвід[^.]*\.)?\s*(.*)$", re.IGNORECASE | re.DOTALL)
+
+
+def _split_description_meta(text: str | None) -> tuple[str | None, str | None, str | None]:
+    if not text:
+        return None, None, None
+    match = _META_PREFIX_RE.match(text)
+    if not match:
+        return None, None, text
+    work_type = match.group(1).strip().rstrip(".") or None
+    experience = match.group(2).strip().rstrip(".") if match.group(2) else None
+    description = match.group(3).strip() or None
+    return work_type, experience, description
 
 
 def parse_workua() -> list[dict]:
@@ -44,10 +62,10 @@ def parse_workua() -> list[dict]:
             salary = None
             company = None
 
-        mt_xs = card.find("div", class_="mt-xs")
+        city_block = card.find("div", class_="text-indent")
         city = None
-        if mt_xs:
-            spans = mt_xs.find_all("span", recursive=False)
+        if city_block:
+            spans = city_block.find_all("span", recursive=False)
             for span in spans:
                 classes = span.get("class") or []
                 if "distance-block" in classes:
@@ -57,7 +75,8 @@ def parse_workua() -> list[dict]:
                     city = text
 
         description_tag = card.find("p", class_="ellipsis-line-3")
-        description = description_tag.get_text(strip=True) if description_tag else None
+        raw_description = description_tag.get_text(strip=True) if description_tag else None
+        work_type, experience, description = _split_description_meta(raw_description)
 
         vacancy = {
             "title": title,
@@ -66,7 +85,8 @@ def parse_workua() -> list[dict]:
             "company": company,
             "city": city,
             "description": description,
-            "work_type": None,
+            "work_type": work_type,
+            "experience": experience,
             "source": "workua",
         }
         vacancies.append(vacancy)

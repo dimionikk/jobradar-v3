@@ -1,7 +1,7 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.vacancy import Vacancy
@@ -10,6 +10,7 @@ from app.services.embeddings import embed_documents
 logger = logging.getLogger(__name__)
 
 UPDATABLE_FIELDS = ("title", "description", "company", "city", "salary", "work_type", "experience")
+STALE_CUTOFF_DAYS = 7
 
 
 async def save_vacancies(vacancies: list[dict], db: AsyncSession) -> dict:
@@ -43,6 +44,7 @@ async def save_vacancies(vacancies: list[dict], db: AsyncSession) -> dict:
                 if field in vacancy_data:
                     setattr(existing, field, vacancy_data[field])
             existing.parsed_at = datetime.now(timezone.utc)
+            existing.is_active = True
             skipped_count += 1
             continue
 
@@ -76,3 +78,14 @@ async def save_vacancies(vacancies: list[dict], db: AsyncSession) -> dict:
         return {"new": 0, "skipped": 0, "invalid": len(vacancies)}
 
     return {"new": new_count, "skipped": skipped_count, "invalid": invalid_count}
+
+
+async def deactivate_stale_vacancies(db: AsyncSession, cutoff_days: int = STALE_CUTOFF_DAYS) -> int:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=cutoff_days)
+    result = await db.execute(
+        update(Vacancy)
+        .where(Vacancy.parsed_at < cutoff, Vacancy.is_active.is_(True))
+        .values(is_active=False)
+    )
+    await db.commit()
+    return result.rowcount

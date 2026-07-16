@@ -8,7 +8,7 @@ from app.parsers.remotive import parse_remotive
 from app.parsers.dou import parse_dou
 from app.parsers.djinni import parse_djinni
 from app.parsers.workua import parse_workua
-from app.services.parser import save_vacancies
+from app.services.parser import save_vacancies, deactivate_stale_vacancies
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +50,14 @@ async def run_parsers_job():
         "Парсинг завершено: нових %s, пропущено %s, некоректних %s",
         result["new"], result["skipped"], result["invalid"],
     )
+
+    try:
+        async with AsyncSessionLocal() as db:
+            deactivated = await deactivate_stale_vacancies(db)
+        if deactivated:
+            logger.info("Деактивовано %s застарілих вакансій", deactivated)
+    except Exception:
+        logger.exception("Помилка деактивації застарілих вакансій")
 
 
 scheduler.add_job(run_parsers_job, "interval", hours=6)
