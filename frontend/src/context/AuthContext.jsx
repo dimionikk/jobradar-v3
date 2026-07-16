@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { loginUser, registerUser, logoutUser } from "../api/auth";
+import { setTokens, clearTokens } from "../api/client";
 import { TOKEN_KEY } from "../api/constants";
 
 const AuthContext = createContext(null);
@@ -9,7 +10,7 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const result = await loginUser(email, password);
-    localStorage.setItem(TOKEN_KEY, result.access_token);
+    setTokens(result.access_token, result.refresh_token);
     setToken(result.access_token);
   }
 
@@ -22,7 +23,7 @@ export function AuthProvider({ children }) {
     try {
       await logoutUser();
     } finally {
-      localStorage.removeItem(TOKEN_KEY);
+      clearTokens();
       setToken(null);
     }
   }

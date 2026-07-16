@@ -14,9 +14,9 @@ function VacanciesPage() {
   const [appliedIds, setAppliedIds] = useState(new Set());
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [cityInput, setCityInput] = useState("");
   const [city, setCity] = useState("");
   const [source, setSource] = useState("");
 
@@ -29,6 +29,14 @@ function VacanciesPage() {
   }, [searchInput]);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setCity(cityInput);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [cityInput]);
+
+  useEffect(() => {
     Promise.all([getSavedVacancies(), getApplications()])
       .then(([saved, applications]) => {
         setSavedIds(new Set(saved.map((v) => v.id)));
@@ -38,17 +46,19 @@ function VacanciesPage() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
-    getVacancies({ search, city, source, page })
+    getVacancies({ search, city, source, page }, { signal: controller.signal })
       .then(setVacancies)
-      .catch((err) => setLoadError(err.message))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (err.name === "AbortError") return;
+        setLoadError(err.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [search, city, source, page]);
-
-  function handleCityChange(value) {
-    setCity(value);
-    setPage(1);
-  }
 
   function handleSourceChange(value) {
     setSource(value);
@@ -82,7 +92,6 @@ function VacanciesPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-8">
       <h1 className="text-xl font-semibold mb-6">Вакансії</h1>
-
       <div className="flex flex-col sm:flex-row gap-2 mb-6">
         <input
           type="text"
@@ -94,8 +103,8 @@ function VacanciesPage() {
         <input
           type="text"
           placeholder="Місто"
-          value={city}
-          onChange={(e) => handleCityChange(e.target.value)}
+          value={cityInput}
+          onChange={(e) => setCityInput(e.target.value)}
           className="sm:w-40 bg-surface border border-line rounded px-3 py-2 text-sm text-text placeholder:text-text-dim focus:outline-none focus:ring-1 focus:ring-signal focus:border-signal transition-colors"
         />
         <select
@@ -109,13 +118,11 @@ function VacanciesPage() {
           ))}
         </select>
       </div>
-
       {actionError && (
         <p className="text-sm text-danger border-l-2 border-danger pl-3 mb-4">
           {actionError}
         </p>
       )}
-
       {loading ? (
         <p className="text-text-dim text-sm">Скануємо джерела...</p>
       ) : vacancies.length === 0 ? (
@@ -136,12 +143,10 @@ function VacanciesPage() {
                   {v.source}
                 </span>
               </div>
-
               <div className="flex items-center gap-3 mt-3 text-sm">
                 <span className="text-text-dim">{v.city || "Місто не вказано"}</span>
                 <span className="font-mono text-signal">{v.salary || "ЗП не вказана"}</span>
               </div>
-
               <div className="flex gap-4 mt-3 pt-3 border-t border-line text-sm">
                 <a
                   href={v.url}
@@ -170,7 +175,6 @@ function VacanciesPage() {
           ))}
         </div>
       )}
-
       <div className="flex justify-between items-center mt-6">
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}

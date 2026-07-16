@@ -14,6 +14,14 @@ export function loginUser(email, password) {
   });
 }
 
+export function refreshAccessToken(refreshToken) {
+  return apiRequest("/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refresh_token: refreshToken }),
+    skipAuthRefresh: true,
+  });
+}
+
 export function logoutUser() {
   return apiRequest("/auth/logout", {
     method: "POST",
