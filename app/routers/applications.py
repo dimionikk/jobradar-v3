@@ -2,7 +2,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -89,7 +89,7 @@ async def update_application(
 
     try:
         await db.commit()
-    except IntegrityError:
+    except (IntegrityError, DataError):
         await db.rollback()
         logger.exception("Failed to update application_id=%s", application_id)
         raise HTTPException(

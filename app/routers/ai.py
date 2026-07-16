@@ -3,6 +3,7 @@ import logging
 
 from anthropic import AsyncAnthropic, APIError, APITimeoutError
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -155,13 +156,21 @@ async def get_matching_vacancies(
         reason = item.get("reason")
         if match_score is None or reason is None:
             continue
-        matches.append(MatchedVacancy(
-            vacancy_id=vacancy.id,
-            title=vacancy.title,
-            company=vacancy.company,
-            match_score=match_score,
-            reason=reason,
-        ))
+
+        try:
+            matches.append(MatchedVacancy(
+                vacancy_id=vacancy.id,
+                title=vacancy.title,
+                company=vacancy.company,
+                match_score=match_score,
+                reason=reason,
+            ))
+        except ValidationError:
+            logger.warning(
+                "AI returned invalid match_score/reason for vacancy_id=%s, skipping",
+                vacancy.id,
+            )
+            continue
 
     matching_response = MatchingResponse(matches=matches)
 
